@@ -169,10 +169,3 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-
-test.ipynb
-data
-test_1.png
-test_2.png
-
-multimodal_alignments/
