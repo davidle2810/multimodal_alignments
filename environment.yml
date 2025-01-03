@@ -1,0 +1,17 @@
+name: mm_align
+channels:
+  - defaults
+  - conda-forge
+  - anaconda
+dependencies:
+  - pip
+  - python==3.11
+  - numpy
+  - cython
+  - pip:
+    - easyocr
+    - pillow
+    - unstructured
+    - poppler-utils
+    - google.generativeai
+    - google
