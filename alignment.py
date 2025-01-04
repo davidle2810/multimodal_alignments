@@ -59,7 +59,9 @@ def main():
     sn_file = args.src_file
     vn_file = args.tgt_file
     sn_content, vn_content = get_content_from_bitext(sn_file,vn_file)
-    sn2vn_content = preprocessing.translate_sn2vn.transliterate(sn_content)
+    sn2vn_content = list()
+    for page in sn_content:
+        sn2vn_content.append({'page_number': page['page_number'], 'content': '\n'.join([line['transliteration'] for line in page['content']])})
     paragraph_alignments = paragraph_alignment(sn2vn_content,vn_content)
     for idx, alignment in enumerate(paragraph_alignments):
         src_id = alignment['source_page_number']

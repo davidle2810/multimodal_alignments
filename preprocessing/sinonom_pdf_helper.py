@@ -1,8 +1,8 @@
 import os
 import shutil
 from pdf2image import convert_from_path
+import preprocessing.translate_sn2vn
 import cv2
-import numpy as np
 import base64
 import json
 import requests
@@ -124,13 +124,13 @@ def extract_pages(file_name):
                 return_choices=False,
             )
         text_lines=result['data']['text_lines']
-                
-        for text_line in text_lines:
-            row = {}
-            row["page_number"] = i
-            row['position'] = stringToStringSorted(text_line['position'])
-            row['content'] = text_line['text']
-            page_content.append(text_line['text'])
+        transliterate_text = preprocessing.translate_sn2vn.sn_transliteration_api('\n'.join([text_line['text'] for text_line in text_lines]))        
+        for i, text_line in enumerate(text_lines):
+            # row = {}
+            # row["page_number"] = i
+            # row['position'] = stringToStringSorted(text_line['position'])
+            # row['content'] = text_line['text']
+            page_content.append({'bbox': text_line['position'], 'content': text_line['text'], 'transliteration':transliterate_text[i]})
         pdf_content.append({'page_number': i+1, 'content':page_content})
     shutil.rmtree(output_folder)
     return pdf_content
