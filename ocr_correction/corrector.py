@@ -102,6 +102,3 @@ def normalize_correction(correction: list) -> str:
         if s.startswith('delete:'):
             return ''
     return ''.join(transform(s) for s in correction)
-
-print('\n'.join(correct('本啉仍𥙩昆', 'bổn dạy những trẻ con'.split())))
-print(normalize_correction(correct('本啉仍𥙩昆', 'bổn dạy những trẻ con'.split())))
