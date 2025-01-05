@@ -5,13 +5,18 @@ channels:
   - anaconda
 dependencies:
   - pip
-  - python==3.11
+  - python==3.10
   - numpy
   - cython
+  - scikit-learn
+  - poppler
   - pip:
     - easyocr
     - pillow
     - unstructured
-    - poppler-utils
     - google.generativeai
     - google
+    - pdf2image
+    - pytesseract
+    - pandas
+    - laserembeddings

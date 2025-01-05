@@ -54,13 +54,15 @@ def paragraph_alignment(sn2vn_content,vn_content):
         
 def main():
     # make temp directory
-    tmp_dir = '/tmp' + str(random.randint(0, 100))
+    tmp_dir = './tmp' + str(random.randint(0, 100))
     while os.path.isdir(tmp_dir):
-        tmp_dir = '/tmp' + str(random.randint(0, 100))
+        tmp_dir = './tmp' + str(random.randint(0, 100))
     os.mkdir(tmp_dir)  
+    print(f"Created temporary directory: {tmp_dir}")
     # read the content of 2 pdf files: nom and viet
-    sn_file = args.src_file
-    vn_file = args.tgt_file
+    sn_file = args.src
+    vn_file = args.tgt
+    print(f"Reading content from {sn_file} and {vn_file}")
     sn_content, vn_content = get_content_from_bitext(sn_file,vn_file)
     # get the transliteration of sino-nom content
     sn2vn_content = list()
@@ -96,3 +98,6 @@ def main():
             result.append(crt.normalize_correction(crt.normalize(src_line,tgt_line.split(' '))))
     return result
     # read output file (in data/output.txt) and perform OCR correction
+
+if __name__ == '__main__':
+    main()
