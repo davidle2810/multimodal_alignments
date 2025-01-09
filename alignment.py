@@ -76,27 +76,28 @@ def main():
     for idx, alignment in enumerate(paragraph_alignments):
         src_id = alignment['source_page_number']
         tgt_id = alignment['target_page_number']
-        path_temp_file_sn2vn = os.path.join(tmp_dir, f"sn2vn_{idx}.txt")
-        path_temp_file_vn = os.path.join(tmp_dir, f"vn_{idx}.txt")
-        # output_file = os.path.join(tmp_dir, f"aligned_{idx}.txt")  
+        path_temp_file_sn2vn = os.path.join('data', "test.tr")
+        path_temp_file_vn = os.path.join('data', "test.vn")
         with open(path_temp_file_sn2vn, "w", encoding="utf-8") as f:
             f.write(sn2vn_content[src_id]['content'])
         with open(path_temp_file_vn, "w", encoding="utf-8") as f:
             f.write(vn_content[tgt_id]['content'])
-        script = os.environ['vecalign'] + '/sentence_alignments/align.sh' 
+        os.chdir('./sentence_alignments')
+        script = './align.sh' 
         print(f"Running: {script}")
         os.system(script)
+        os.chdir('../')
         with open('data/output.txt','r',encoding='utf-8') as f:
-            alignments=''.join(f.readlines()).split('\n')
-        for i in range(len(alignments)):
-            x = eval(alignments[i].split(':')[0])
-            y = eval(alignments[i].split(':')[1])
-            src_lines = [line['content'] for line in sn_content[src_id]['content']]
-            tgt_lines = vn_content[tgt_id]['content'].split('\n')
-            if len(x)>0 and len(y)>0:
-                src_line = ''.join([src_lines[j] for j in x])
-                tgt_line = ' '.join([tgt_lines[j] for j in y])
-            result.append(crt.normalize_correction(crt.normalize(src_line,tgt_line.split(' '))))
+                alignments=''.join(f.readlines()).split('\n')
+        for i in range(len(alignments)-1):
+                x = eval(alignments[i].split(':')[0])
+                y = eval(alignments[i].split(':')[1])
+                src_lines = [line['content'] for line in sn_content[src_id]['content']]
+                tgt_lines = vn_content[tgt_id]['content'].split('\n')
+                if len(x)>0 and len(y)>0:
+                    src_line = ''.join([src_lines[j] for j in x])
+                    tgt_line = ' '.join([tgt_lines[j] for j in y])
+                result.append([src_line,tgt_line])
     return result
     # read output file (in data/output.txt) and perform OCR correction
 """
