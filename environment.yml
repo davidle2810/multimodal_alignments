@@ -4,10 +4,11 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
-  - pip
-  - python==3.11
+  - pip==23.0
+  - python==3.10
   - numpy
   - cython
+  - sentencepiece
   - pip:
     - easyocr
     - pillow
@@ -15,3 +16,11 @@ dependencies:
     - poppler-utils
     - google.generativeai
     - google
+    - pytesseract
+    - pandas
+    - mcerp 
+    - unicategories
+    - fairseq
+    - scikit-learn
+    - pdf2image
+    - tensorboardX

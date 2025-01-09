@@ -182,7 +182,7 @@ def print_alignments(alignments, text, scores=None, src_lines=None, tgt_lines=No
 def print_alignments(alignments, scores=None, src_lines=None, tgt_lines=None, ofile=sys.stdout):
     if scores is None:
         scores = [None for _ in alignments]
-    with open('./data/output.txt', 'w') as f:
+    with open('../data/output.txt', 'w') as f:
         for (x, y), s in zip(alignments, scores):
             if s is None:
                 f.write(f'{x}:{y}\n')

@@ -103,6 +103,7 @@ def extract_pages(file_name):
     # Convert PDF to images
     pages = convert_from_path(file_name, 600)  # 300 DPI for better quality
     pdf_content = list()
+    os.system('rm -r ./data/images_nom')
     # Save each page as an image
     output_folder='./data/images_nom'
     os.makedirs(output_folder)
