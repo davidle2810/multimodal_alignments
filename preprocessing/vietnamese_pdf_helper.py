@@ -9,7 +9,7 @@ genai.configure(api_key='AIzaSyDX5tM_HRPoFl7pCQxZ97WwICMCFwtsGqc')
 model = genai.GenerativeModel('gemini-1.5-pro')
 import cv2
 import numpy as np
-
+import re
 def enhance_image(image):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred_image = cv2.GaussianBlur(gray_image, (21, 21), 0)
@@ -43,6 +43,12 @@ def clean_text_with_gemini(input_text):
     # Return the cleaned text
     return response.candidates[0].content.parts[0].text
 
+def clean_text(input_text):
+    clean_text_list =  re.sub(r'\n\n+', '\n', re.sub(r'[^\w\s]', '', input_text.lower())).split('\n')
+    for i in range(len(clean_text_list)):
+        clean_text_list[i]=re.sub(r'\s+', ' ',clean_text_list[i].strip())
+    return '\n'.join(clean_text_list)
+
 def extract_pages(file_name):
     # Convert PDF to images
     pages = convert_from_path(file_name, 600)  # 300 DPI for better quality
@@ -54,14 +60,14 @@ def extract_pages(file_name):
 
     # Save each page as an image
     for i, page in enumerate(pages):
-        image_path = os.path.join(output_folder, f"page_{i+1}.png")  # Save as PNG
+        image_path = os.path.join(output_folder, f"page_{i}.png")  # Save as PNG
         page.save(image_path, 'PNG')
         # open_cv_image = np.array(page)
         # open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)  # Convert to BGR format
         # enhanced_page = enhance_image(open_cv_image)
         # cv2.imwrite(image_path, enhanced_page)
         elements = partition(image_path, languages=['vie'])  # 'vie' is for Vietnamese
-        page_content = {'page_number': i+1, 'content': clean_text_with_gemini("\n".join([str(el) for el in elements]))}
+        page_content = {'page_number': i, 'content': clean_text(clean_text_with_gemini("\n".join([str(el) for el in elements])))}
         pdf_content.append(page_content)
     shutil.rmtree(output_folder)
     return pdf_content

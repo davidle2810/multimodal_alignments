@@ -2,6 +2,7 @@ import os
 import shutil
 from pdf2image import convert_from_path
 import preprocessing.translate_sn2vn
+import preprocessing.sort_boxes
 import cv2
 import base64
 import json
@@ -109,7 +110,7 @@ def extract_pages(file_name):
     os.makedirs(output_folder)
     # Save each page as an image
     for i, page in enumerate(pages):
-        image_path = os.path.join(output_folder, f"page_{i+1}.png")  # Save as PNG
+        image_path = os.path.join(output_folder, f"page_{i}.png")  # Save as PNG
         page.save(image_path, 'PNG')
         image_base64 = encode_image_to_base64(image_path)
         page_content = list()
@@ -126,13 +127,13 @@ def extract_pages(file_name):
             )
         text_lines=result['data']['text_lines']
         transliterate_text = preprocessing.translate_sn2vn.sn_transliteration_api('\n'.join([text_line['text'] for text_line in text_lines]))        
-        for i, text_line in enumerate(text_lines):
+        for line_id, text_line in enumerate(text_lines):
             # row = {}
             # row["page_number"] = i
             # row['position'] = stringToStringSorted(text_line['position'])
             # row['content'] = text_line['text']
-            page_content.append({'bbox': text_line['position'], 'content': text_line['text'], 'transliteration':transliterate_text[i]})
-        pdf_content.append({'page_number': i+1, 'content':page_content})
+            page_content.append({'bbox': text_line['position'], 'content': text_line['text'], 'transliteration':transliterate_text[line_id]})
+        pdf_content.append({'page_number': i, 'content':preprocessing.sort_boxes.sort(page_content)})
     shutil.rmtree(output_folder)
     return pdf_content
     

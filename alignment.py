@@ -3,13 +3,15 @@ import preprocessing.vietnamese_pdf_helper as vn
 import preprocessing.translate_sn2vn
 import ocr_correction.corrector as crt
 import os
-import random
 import argparse
 from random import seed as seed
 from laserembeddings import Laser
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-"""parser = argparse.ArgumentParser('Sentence alignment using sentence embeddings and FastDTW',
+import ocr_correction.corrector as crt
+import csv
+import pandas as pd
+parser = argparse.ArgumentParser('Sentence alignment using sentence embeddings and FastDTW',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('--src', type=str, required=True,
@@ -21,7 +23,7 @@ parser.add_argument('--tgt', type=str, required=True,
 parser.add_argument('-o', '--output', type=str, required=True,
                     help='path_to_output_folder')
 
-args = parser.parse_args()"""
+args = parser.parse_args()
 laser = Laser()
 
 def get_content_from_bitext(sn_file, vn_file):
@@ -44,26 +46,25 @@ def paragraph_alignment(sn2vn_content,vn_content):
             target_page = vn_content[best_i[i]]
             
             alignment_results.append({
-                'source_page_number': i,
+                'source_page_number': source_page['page_number'],
                 'source_text': source_page['content'],
-                'target_page_number': best_i[i],
+                'target_page_number': target_page['page_number'],
                 'target_text': target_page['content'],
                 'similarity_score': float(best_score)
             })
     return alignment_results
 
 
-        
-"""
-def main():
-    # make temp directory
-    tmp_dir = '/tmp' + str(random.randint(0, 100))
-    while os.path.isdir(tmp_dir):
-        tmp_dir = '/tmp' + str(random.randint(0, 100))
-    os.mkdir(tmp_dir)  
-    # read the content of 2 pdf files: nom and viet
-    sn_file = args.src_file
-    vn_file = args.tgt_file
+if __name__ == "__main__":
+    # # make temp directory
+    # tmp_dir = '/tmp' + str(random.randint(0, 100))
+    # while os.path.isdir(tmp_dir):
+    #     tmp_dir = '/tmp' + str(random.randint(0, 100))
+    # os.mkdir(tmp_dir)  
+    # # read the content of 2 pdf files: nom and viet
+    sn_file = args.src
+    vn_file = args.tgt
+    output_file = args.output
     sn_content, vn_content = get_content_from_bitext(sn_file,vn_file)
     # get the transliteration of sino-nom content
     sn2vn_content = list()
@@ -73,7 +74,7 @@ def main():
     paragraph_alignments = paragraph_alignment(sn2vn_content,vn_content)
     # align sentences
     result = list()
-    for idx, alignment in enumerate(paragraph_alignments):
+    for idx, alignment in enumerate(paragraph_alignments[1:2]):
         src_id = alignment['source_page_number']
         tgt_id = alignment['target_page_number']
         path_temp_file_sn2vn = os.path.join('data', "test.tr")
@@ -88,16 +89,20 @@ def main():
         os.system(script)
         os.chdir('../')
         with open('data/output.txt','r',encoding='utf-8') as f:
-                alignments=''.join(f.readlines()).split('\n')
+            alignments=''.join(f.readlines()).split('\n')
+        src_lines = [(line['bbox'],line['content']) for line in sn_content[src_id]['content']]
+        tgt_lines = vn_content[tgt_id]['content'].split('\n')
         for i in range(len(alignments)-1):
-                x = eval(alignments[i].split(':')[0])
-                y = eval(alignments[i].split(':')[1])
-                src_lines = [line['content'] for line in sn_content[src_id]['content']]
-                tgt_lines = vn_content[tgt_id]['content'].split('\n')
-                if len(x)>0 and len(y)>0:
-                    src_line = ''.join([src_lines[j] for j in x])
-                    tgt_line = ' '.join([tgt_lines[j] for j in y])
-                result.append([src_line,tgt_line])
-    return result
-    # read output file (in data/output.txt) and perform OCR correction
-"""
+            x = eval(alignments[i].split(':')[0])
+            y = eval(alignments[i].split(':')[1])
+            if len(x)>0 and len(y)>0:
+                src_line = ([src_lines[j][0] for j in x], [src_lines[j][1] for j in x])
+                tgt_line = ' '.join([tgt_lines[j] for j in y]).split(' ')
+                corrected_list=crt.correct(''.join(src_line[1]),tgt_line)
+                for k in range(len(src_line[1])):
+                    correct_line = crt.normalize_correction(list(corrected_list[:len(src_line[1][k])]))
+                    result.append((src_id,src_line[0][k],src_line[1][k],correct_line,' '.join(list(tgt_line[:len(correct_line)]))))
+                    corrected_list = corrected_list[len(src_line[1][k]):]
+                    tgt_line = tgt_line[len(correct_line):]
+    df = pd.DataFrame(result, columns=['page_number','bbox', 'ocr', 'doc','correction'])
+    df.to_excel(output_file, index=False)

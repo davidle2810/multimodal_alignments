@@ -36,7 +36,7 @@ def correct(sn: str, qn: list[str]) -> list[str]:
     }
 
     def get_similar(s, q):
-        S1 = [s] + sn_sim.get(s, list)
+        S1 = [s] + sn_sim.get(s, list())
         S2 = qn_to_sn.get(q, list())
         S2 = set(S2)
         S = [s for s in S1 if s in S2]
@@ -72,7 +72,7 @@ def correct(sn: str, qn: list[str]) -> list[str]:
             corrections.append(f'correct:{similar[i][j]}')
             traceback(i + 1, j + 1)
         elif i < n and j < m and similar[i][j] is None and res == memoi(i + 1, j + 1) + edit_cost['replace']:
-            corrections.append(f'replace:{sn[j]}->{qn_to_sn.get(qn[i], list())[0]}')
+            corrections.append(f'replace:{sn[j]}->{qn_to_sn.get(qn[i], ["X"])[0]}')
             traceback(i + 1, j + 1)
         elif i < n and res == memoi(i + 1, j) + edit_cost['insert']:
             corrections.append(f'insert:{qn_to_sn.get(qn[i], list())[0]}')
