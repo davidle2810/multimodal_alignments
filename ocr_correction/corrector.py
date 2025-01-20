@@ -75,7 +75,7 @@ def correct(sn: str, qn: list[str]) -> list[str]:
             corrections.append(f'replace:{sn[j]}->{qn_to_sn.get(qn[i], ["X"])[0]}')
             traceback(i + 1, j + 1)
         elif i < n and res == memoi(i + 1, j) + edit_cost['insert']:
-            corrections.append(f'insert:{qn_to_sn.get(qn[i], list())[0]}')
+            corrections.append(f'insert:{qn_to_sn.get(qn[i], ["X"])[0]}')
             traceback(i + 1, j)
         elif j < m and res == memoi(i, j + 1) + edit_cost['delete']:
             corrections.append(f'delete:{sn[j]}')

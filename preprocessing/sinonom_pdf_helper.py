@@ -3,23 +3,10 @@ import shutil
 from pdf2image import convert_from_path
 import preprocessing.translate_sn2vn
 import preprocessing.sort_boxes
-import cv2
 import base64
-import json
 import requests
 TOKEN = "677596f6-bc67-472b-a46d-c5bc6d49012d"
 EMAIL = "ngthach3110@gmail.com"
-
-def enhance_image(image):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred_image = cv2.GaussianBlur(gray_image, (21, 21), 0)
-    normalized_image = cv2.subtract(gray_image, blurred_image)
-    enhanced_image = cv2.equalizeHist(normalized_image)
-    threshold_image = cv2.adaptiveThreshold(enhanced_image, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    denoised = cv2.morphologyEx(threshold_image, cv2.MORPH_CLOSE, kernel)
-    inverted_image = cv2.bitwise_not(denoised)
-    return inverted_image
 
 def encode_image_to_base64(image_path):
     """
@@ -73,40 +60,23 @@ def kandian_ocr_api(
     else:
         return {"error": f"HTTP {response.status_code}: {response.text}"}
 
-
-def stringToStringSorted(res: list):
-    
-    size = len(res)
-    quickSort(res, 0, size - 1)
-    return json.dumps(res)
-
-
-def partition(arr: list, low: int, high: int):
-    pivot = arr[high]
-    i = low - 1
-
-    for j in range(low, high):
-        if arr[j][0] >= pivot[0]:
-            i = i + 1
-            (arr[i], arr[j]) = (arr[j], arr[i])
-
-    (arr[i + 1], arr[high]) = (arr[high], arr[i + 1])
-    return i + 1
-
-
-def quickSort(arr: list, low: int, high: int):
-    if low < high:
-        pi = partition(arr, low, high)
-        quickSort(arr, low, pi - 1)
-        quickSort(arr, pi + 1, high)
-
-def extract_pages(file_name):
+def extract_pages(file_name: str) -> list:
+    """
+    Extracts the NS text from each page of the provided file.
+    :param file_name: The path to the NS file.
+    :return: A list of dictionaries, where each dictionary represents a page in the file and contains:
+        - 'page_number': An integer representing the page index (starting from 0).
+        - 'content': A list of dictionaries, each representing a line of text on the page. Each line dictionary contains:
+            - 'bbox': A list of four tuples representing the coordinates of the bounding box for the text, in the form [[x0, y0], [x1, y1], [x2, y2], [x3, y3]].
+            - 'content': The text content within the bounding box.
+            - 'transliteration': The transliterated version of the text content.
+    """
     # Convert PDF to images
     pages = convert_from_path(file_name, 600)  # 300 DPI for better quality
     pdf_content = list()
-    os.system('rm -r ./data/images_nom')
-    # Save each page as an image
     output_folder='./data/images_nom'
+    if os.path.exists(output_folder) and os.path.isdir(output_folder):
+        os.system(f'rm -r {output_folder}')
     os.makedirs(output_folder)
     # Save each page as an image
     for i, page in enumerate(pages):
@@ -128,12 +98,8 @@ def extract_pages(file_name):
         text_lines=result['data']['text_lines']
         transliterate_text = preprocessing.translate_sn2vn.sn_transliteration_api('\n'.join([text_line['text'] for text_line in text_lines]))        
         for line_id, text_line in enumerate(text_lines):
-            # row = {}
-            # row["page_number"] = i
-            # row['position'] = stringToStringSorted(text_line['position'])
-            # row['content'] = text_line['text']
-            page_content.append({'bbox': text_line['position'], 'content': text_line['text'], 'transliteration':transliterate_text[line_id]})
-        pdf_content.append({'page_number': i, 'content':preprocessing.sort_boxes.sort(page_content)})
+            page_content.append({'bbox': text_line['position'], 'content': text_line['text'], 'transliteration': transliterate_text[line_id]})
+        pdf_content.append({'page_number': i, 'content': preprocessing.sort_boxes.sort(page_content)})
     shutil.rmtree(output_folder)
     return pdf_content
     

@@ -1,13 +1,18 @@
 import numpy as np
 
-def normalize_bbox(box):
-    box = np.array(box)  # Chuyển sang numpy array
-    sorted_indices = np.lexsort((box[:, 0], box[:, 1]))  # Sắp xếp theo y trước, sau đó x
-    top_two = box[sorted_indices[:2]]  # Lấy 2 điểm trên cùng
-    bottom_two = box[sorted_indices[2:]]  # Lấy 2 điểm dưới cùng
-    top_two = top_two[np.argsort(top_two[:, 0])]  # Sắp xếp theo x
+def normalize_bbox(box: list) -> list:
+    """
+    Converts the bounding box
+    :param box: bounding box as the following format [[x0,y0],[x1,y1],[x2,y2],[x3,y3]]
+    :return: converted bounding box  [top_left, top_right, bottom_right, bottom_left]
+    """
+    box = np.array(box)
+    sorted_indices = np.lexsort((box[:, 0], box[:, 1])) 
+    top_two = box[sorted_indices[:2]]
+    bottom_two = box[sorted_indices[2:]] 
+    top_two = top_two[np.argsort(top_two[:, 0])]
     top_left, top_right = top_two[0], top_two[1]
-    bottom_two = bottom_two[np.argsort(bottom_two[:, 0])]  # Sắp xếp theo x
+    bottom_two = bottom_two[np.argsort(bottom_two[:, 0])]
     bottom_left, bottom_right = bottom_two[0], bottom_two[1]
     return [top_left.tolist(), top_right.tolist(), bottom_right.tolist(), bottom_left.tolist()]
 
@@ -47,9 +52,6 @@ def sort(data):
             key = data[chunk['index_list'][idx]]
             j = idx - 1
 
-            # Move elements of arr[0..i-1], that are
-            # greater than key, to one position ahead
-            # of their current position
             key_range = [min(key['bbox'][0][1],key['bbox'][1][1]),max(key['bbox'][2][1],key['bbox'][3][1])]
             while (j >= 0) and (key['bbox'][0][1] < data[chunk['index_list'][j]]['bbox'][0][1]) and (check_overlap(key_range, [min(data[chunk['index_list'][j]]['bbox'][0][1],data[chunk['index_list'][j]]['bbox'][1][1]),max(data[chunk['index_list'][j]]['bbox'][2][1],data[chunk['index_list'][j]]['bbox'][3][1])])==False):
                 data[chunk['index_list'][j+1]] = data[chunk['index_list'][j]]

@@ -1,6 +1,5 @@
 import preprocessing.sinonom_pdf_helper as sn
 import preprocessing.vietnamese_pdf_helper as vn
-import preprocessing.translate_sn2vn
 import ocr_correction.corrector as crt
 import os
 import argparse
@@ -9,8 +8,7 @@ from laserembeddings import Laser
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import ocr_correction.corrector as crt
-import csv
-import pandas as pd
+from xlsxwriter.workbook import Workbook
 parser = argparse.ArgumentParser('Sentence alignment using sentence embeddings and FastDTW',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -31,7 +29,7 @@ def get_content_from_bitext(sn_file, vn_file):
     vn_content = vn.extract_pages(vn_file)
     return sn_content, vn_content
 
-def paragraph_alignment(sn2vn_content,vn_content):
+def align_paragraphs(sn2vn_content,vn_content):
     source_embeddings = laser.embed_sentences([page['content'] for page in sn2vn_content], lang='vi')  # or "en" if your source is in English, etc.
     target_embeddings = laser.embed_sentences([page['content'] for page in vn_content], lang='vi')  # adapt the language code as needed
     source_embeddings = np.array(source_embeddings)
@@ -54,14 +52,23 @@ def paragraph_alignment(sn2vn_content,vn_content):
             })
     return alignment_results
 
-
+def align_sentences(paragraph_alignment):
+    src_paragraph_id = paragraph_alignment['source_page_number']
+    tgt_paragraph_id = paragraph_alignment['target_page_number']
+    path_temp_file_sn2vn = os.path.join('data', "test.no")
+    path_temp_file_vn = os.path.join('data', "test.vi")
+    with open(path_temp_file_sn2vn, "w", encoding="utf-8") as f:
+        f.write(sn2vn_content[src_paragraph_id]['content'])
+    with open(path_temp_file_vn, "w", encoding="utf-8") as f:
+        f.write(vn_content[tgt_paragraph_id]['content'])
+    os.chdir('./sentence_alignments')
+    script = './align.sh' 
+    os.system(script)
+    os.chdir('../')
+    with open('data/output.txt','r',encoding='utf-8') as f:
+        return ''.join(f.readlines()).split('\n')
 if __name__ == "__main__":
-    # # make temp directory
-    # tmp_dir = '/tmp' + str(random.randint(0, 100))
-    # while os.path.isdir(tmp_dir):
-    #     tmp_dir = '/tmp' + str(random.randint(0, 100))
-    # os.mkdir(tmp_dir)  
-    # # read the content of 2 pdf files: nom and viet
+    # read the content of 2 pdf files: nom and viet
     sn_file = args.src
     vn_file = args.tgt
     output_file = args.output
@@ -71,38 +78,66 @@ if __name__ == "__main__":
     for page in sn_content:
         sn2vn_content.append({'page_number': page['page_number'], 'content': '\n'.join([line['transliteration'] for line in page['content']])})
     # align paragraphs
-    paragraph_alignments = paragraph_alignment(sn2vn_content,vn_content)
+    paragraph_alignments = align_paragraphs(sn2vn_content,vn_content)
     # align sentences
-    result = list()
-    for idx, alignment in enumerate(paragraph_alignments[1:2]):
-        src_id = alignment['source_page_number']
-        tgt_id = alignment['target_page_number']
-        path_temp_file_sn2vn = os.path.join('data', "test.tr")
-        path_temp_file_vn = os.path.join('data', "test.vn")
-        with open(path_temp_file_sn2vn, "w", encoding="utf-8") as f:
-            f.write(sn2vn_content[src_id]['content'])
-        with open(path_temp_file_vn, "w", encoding="utf-8") as f:
-            f.write(vn_content[tgt_id]['content'])
-        os.chdir('./sentence_alignments')
-        script = './align.sh' 
-        print(f"Running: {script}")
-        os.system(script)
-        os.chdir('../')
-        with open('data/output.txt','r',encoding='utf-8') as f:
-            alignments=''.join(f.readlines()).split('\n')
-        src_lines = [(line['bbox'],line['content']) for line in sn_content[src_id]['content']]
-        tgt_lines = vn_content[tgt_id]['content'].split('\n')
-        for i in range(len(alignments)-1):
-            x = eval(alignments[i].split(':')[0])
-            y = eval(alignments[i].split(':')[1])
-            if len(x)>0 and len(y)>0:
-                src_line = ([src_lines[j][0] for j in x], [src_lines[j][1] for j in x])
-                tgt_line = ' '.join([tgt_lines[j] for j in y]).split(' ')
-                corrected_list=crt.correct(''.join(src_line[1]),tgt_line)
-                for k in range(len(src_line[1])):
-                    correct_line = crt.normalize_correction(list(corrected_list[:len(src_line[1][k])]))
-                    result.append((src_id,src_line[0][k],src_line[1][k],correct_line,' '.join(list(tgt_line[:len(correct_line)]))))
-                    corrected_list = corrected_list[len(src_line[1][k]):]
-                    tgt_line = tgt_line[len(correct_line):]
-    df = pd.DataFrame(result, columns=['page_number','bbox', 'ocr', 'doc','correction'])
-    df.to_excel(output_file, index=False)
+    with Workbook(f"sample_output.xlsx") as workbook:
+        worksheet   = workbook.add_worksheet(f"Result")
+        font_format = workbook.add_format({'font_name': 'Nom Na Tong'})
+        red         = workbook.add_format({'color': 'red', 'font_name': 'Nom Na Tong'})
+        yellow      = workbook.add_format({'color': 'yellow', 'font_name': 'Nom Na Tong'})
+        blue        = workbook.add_format({'color': 'blue', 'font_name': 'Nom Na Tong'})
+        green       = workbook.add_format({'color': 'green', 'font_name': 'Nom Na Tong'})
+        black       = workbook.add_format({'color': 'black', 'font_name': 'Nom Na Tong'})
+        worksheet.write(0, 0, 'page_id', font_format)
+        worksheet.write(0, 1, 'bbox', font_format)
+        worksheet.write(0, 2, 'ocr', font_format)
+        worksheet.write(0, 3, 'correction', font_format)
+        worksheet.write(0, 4, 'nom', font_format)
+        row_id = 1
+        for paragraph_alignment_idx, paragraph_alignment in enumerate(paragraph_alignments):
+            sentence_alignments = align_sentences(paragraph_alignment)
+            src_lines = [(line['bbox'],line['content']) for line in sn_content[paragraph_alignment['source_page_number']]['content']]
+            tgt_lines = vn_content[paragraph_alignment['target_page_number']]['content'].split('\n')
+            for i in range(len(sentence_alignments)-1):
+                src_line_id = eval(sentence_alignments[i].split(':')[0])
+                tgt_line_id = eval(sentence_alignments[i].split(':')[1])
+                if len(src_line_id)>0 and len(tgt_line_id)>0:
+                    src_line = [(src_lines[j][0],src_lines[j][1]) for j in src_line_id]
+                    tgt_line = ' '.join([tgt_lines[j] for j in tgt_line_id]).split(' ')
+                    nom_line = ''.join([line[1] for line in src_line])
+                    corrected_list=crt.correct(nom_line,tgt_line)
+                    vie_list = tgt_line.copy()
+                    for chunk in src_line:
+                        page_id = paragraph_alignment['source_page_number']
+                        bbox = chunk[0]
+                        nom_list = list(chunk[1])
+                        ocrs = []
+                        corrs = []
+                        qns = []
+                        while len(nom_list)>0:
+                            if corrected_list[0].startswith('correct:'):
+                                ocrs.extend((black, nom_list[0]))
+                                corrs.extend((black, corrected_list[0].split(':')[1]))
+                                qns.extend((black, vie_list[0] + ' '))
+                                nom_list.pop(0)
+                                vie_list.pop(0)
+                            elif corrected_list[0].startswith('replace:'):
+                                ocrs.extend((green, nom_list[0]))
+                                corrs.extend((green, corrected_list[0].split(':')[1][-1]))
+                                qns.extend((green, vie_list[0] + ' '))
+                                nom_list.pop(0)
+                                vie_list.pop(0)
+                            elif corrected_list[0].startswith('delete:'):
+                                ocrs.extend((red, nom_list[0]))
+                                nom_list.pop(0)
+                            elif corrected_list[0].startswith('insert:'):
+                                corrs.extend((blue, corrected_list[0].split(':')[1]))
+                                qns.extend((blue, vie_list[0] + ' '))
+                                vie_list.pop(0)
+                            corrected_list.pop(0)
+                        worksheet.write(row_id, 0, page_id, font_format)
+                        worksheet.write(row_id, 1, str(bbox), font_format)
+                        worksheet.write_rich_string(row_id, 2, *ocrs)
+                        worksheet.write_rich_string(row_id, 3, *corrs)
+                        worksheet.write_rich_string(row_id, 4, *qns)
+                        row_id =  row_id + 1

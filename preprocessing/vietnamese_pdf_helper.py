@@ -1,26 +1,12 @@
 from unstructured.partition.auto import partition
-import pytesseract
 import google.generativeai as genai
 import os
 import shutil
 from pdf2image import convert_from_path
-pytesseract.pytesseract.tesseract_cmd = r"mnt/c/users/Quoc Anh/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"
+#pytesseract.pytesseract.tesseract_cmd = r"mnt/c/users/Quoc Anh/AppData/Local/Programs/Tesseract-OCR/tesseract.exe"
 genai.configure(api_key='AIzaSyDX5tM_HRPoFl7pCQxZ97WwICMCFwtsGqc')
 model = genai.GenerativeModel('gemini-1.5-pro')
-import cv2
-import numpy as np
 import re
-def enhance_image(image):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred_image = cv2.GaussianBlur(gray_image, (21, 21), 0)
-    normalized_image = cv2.subtract(gray_image, blurred_image)
-    enhanced_image = cv2.equalizeHist(normalized_image)
-    threshold_image = cv2.adaptiveThreshold(enhanced_image, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    denoised = cv2.morphologyEx(threshold_image, cv2.MORPH_CLOSE, kernel)
-    inverted_image = cv2.bitwise_not(denoised)
-    return inverted_image
-
 def clean_text_with_gemini(input_text):
     """
     Function to clean text using Google's Gemini model.
@@ -49,23 +35,33 @@ def clean_text(input_text):
         clean_text_list[i]=re.sub(r'\s+', ' ',clean_text_list[i].strip())
     return '\n'.join(clean_text_list)
 
-def extract_pages(file_name):
+def convert_to_bw(image, threshold=128):
+    gray_image = image.convert('L')    
+    # Apply thresholding to create a binary (black and white) image
+    bw_image = gray_image.point(lambda p: p > threshold and 255)
+    return bw_image
+
+
+def extract_pages(file_name: str) -> list:
+    """
+    Extracts the QN text from each page of the provided file.
+    :param file_name: The path to the NS file.
+    :return: A list of dictionaries, where each dictionary represents a page in the file and contains:
+        - 'page_number': An integer representing the page index (starting from 0).
+        - 'content': A cleaned text
+    """
     # Convert PDF to images
     pages = convert_from_path(file_name, 600)  # 300 DPI for better quality
     pdf_content = list()
-    os.system('rm -r ./data/images_viet')
-    # Save each page as an image
     output_folder='./data/images_viet'
+    if os.path.exists(output_folder) and os.path.isdir(output_folder):
+        os.system(f'rm -r {output_folder}')
     os.makedirs(output_folder)
 
     # Save each page as an image
     for i, page in enumerate(pages):
         image_path = os.path.join(output_folder, f"page_{i}.png")  # Save as PNG
-        page.save(image_path, 'PNG')
-        # open_cv_image = np.array(page)
-        # open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)  # Convert to BGR format
-        # enhanced_page = enhance_image(open_cv_image)
-        # cv2.imwrite(image_path, enhanced_page)
+        convert_to_bw(page).save(image_path, 'PNG')
         elements = partition(image_path, languages=['vie'])  # 'vie' is for Vietnamese
         page_content = {'page_number': i, 'content': clean_text(clean_text_with_gemini("\n".join([str(el) for el in elements])))}
         pdf_content.append(page_content)

@@ -1,7 +1,13 @@
 import json
 import requests
 
-def sn_transliteration_api(text):
+def sn_transliteration_api(text: str) -> str:
+    """
+    Calls the transliteration API to convert the input text.
+    
+    :param text: The text to be transliterated.
+    :return: The transliterated text if successful, else an empty string.
+    """
     headers = {"User-Agent": "transliteration"}
     url_transliteration = "https://tools.clc.hcmus.edu.vn/api/web/clc-sinonom/sinonom-transliteration"
     data = {"text":text}
