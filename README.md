@@ -30,6 +30,12 @@ python alignment.py --src src_path --tgt tgt_path -o output_path
 
 * -o : output file contain pairs of sentences that are aligned and semi-corrected.
 
+### Output format
+Please refer to [here](sample_output.xlsx)
+Color code:
+* green: change
+* red: delete
+* blue: insert
 ### IMPORTANT NOTE
 * pages in source file and target file MUST have the format as the following example:
   ![sample_page_sinonom](media/sample_page_sinonom.png) ![sample_page_vietnamese](media/sample_page_vietnamese.png)
