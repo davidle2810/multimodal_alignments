@@ -2,7 +2,7 @@
 
 MMA utilizes the similarity of multilingual sentence embeddings through LASER to assess sentence similarity. In combination with the transliteration tool, MMA works with the Sino-Nôm script, which is not supported by LASER, by transliterating it into Vietnamese.
 
-## Installation KC4Align
+## MMA Installation
 
 You can build an environment using conda as follows:
 
