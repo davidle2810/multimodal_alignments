@@ -67,6 +67,7 @@ def align_sentences(paragraph_alignment):
     os.chdir('../')
     with open('data/output.txt','r',encoding='utf-8') as f:
         return ''.join(f.readlines()).split('\n')
+    
 if __name__ == "__main__":
     # read the content of 2 pdf files: nom and viet
     sn_file = args.src

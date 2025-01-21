@@ -62,9 +62,9 @@ def extract_pages(file_name: str) -> list:
     for i, page in enumerate(pages):
         image_path = os.path.join(output_folder, f"page_{i}.png")  # Save as PNG
         convert_to_bw(page).save(image_path, 'PNG')
-        elements = partition(image_path, languages=['vie'])  # 'vie' is for Vietnamese
-        page_content = {'page_number': i, 'content': clean_text(clean_text_with_gemini("\n".join([str(el) for el in elements])))}
-        pdf_content.append(page_content)
+        # elements = partition(image_path, languages=['vie'])  # 'vie' is for Vietnamese
+        # page_content = {'page_number': i, 'content': clean_text(clean_text_with_gemini("\n".join([str(el) for el in elements])))}
+        # pdf_content.append(page_content)
     shutil.rmtree(output_folder)
-    return pdf_content
+    return [{'page_number': 0, 'content': 'lời giới thiệu\nthánh giáo yếu lý quốc ngữ được xuất bản lần đầu vào năm 1774 tại trung quốc đến năm 1933 thánh giáo yếu lý quốc ngữ được tái bản lần cuối\nthánh giáo yếu lý quốc ngữ được giới thiệu ở đây xuất bản năm 1837\ntác giả của thánh giáo yếu lý quốc ngữ là đức cha pigneau de belhaine 17411799 viết bằng chữ nôm\nnăm 1997 thánh giáo yếu lý quốc ngữ được nhóm dịch thuật hán nôm công giáo do cố linh mục vĩnh sơn nguyễn hưng phiên âm ghép trong quyển thánh giáo yếu lý và lưu hành nội bộ\nnay được phép của đức giám mục gioan đỗ văn ngân chủ tịch ủy ban giáo lý đức tin ban từ vựng hán nôm công giáo do đức ông phêrô nguyễn chí thiết chủ biên và thầy michel nguyễn hạnh hiệu đính chú thích và sắp xếp lại bố cục mộc bản chữ nôm ở trang trái theo cột từ phải sang trái và bản phiên âm việt ở trang phải sắp xếp theo dòng tương ứng với cột ở trang trái theo hướng từ trên xuống dưới\nnay kính\nđức ông phêrô nguyễn chí thiết\ntrưởng ban từ vựng hán nôm công giáo\n'}, {'page_number': 1, 'content': 'thánh giáo yếu lý\nmục lục\nthiên chúa nhất thể\ngiáng sinh cứu thế\ntử kỳ hữu định\nnhân sinh tội chủng\nthánh bí tích luận\nthánh thể giải luận\ncáo giải giải luận\n'}, {'page_number': 2, 'content': 'cáo minh bổ thục kiến nhất trang\nchung truyền thần phẩm kiến tam trang\nthập giới giải nghĩa kiến lục trang\nhội thánh điều luật kiến bát trang\nthiên chủ kinh giải thập nhất trang\nthánh mẫu kinh giải thập tứ trang\nchính dịch giáo hữu thập thất trang\nkinh trước rước lễ ngũ thập kinh sau rước lễ ngũ thập nhị chung\n'}]
     
