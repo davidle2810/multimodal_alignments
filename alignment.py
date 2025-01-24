@@ -9,19 +9,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import ocr_correction.corrector as crt
 from xlsxwriter.workbook import Workbook
-parser = argparse.ArgumentParser('Sentence alignment using sentence embeddings and FastDTW',
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--src', type=str, required=True,
-                    help='path_to_source_document')
-
-parser.add_argument('--tgt', type=str, required=True,
-                    help='path_to_target_document')
-
-parser.add_argument('-o', '--output', type=str, required=True,
-                    help='path_to_output_folder')
-
-args = parser.parse_args()
 laser = Laser()
 
 def get_content_from_bitext(sn_file, vn_file):
@@ -69,6 +57,19 @@ def align_sentences(paragraph_alignment):
         return ''.join(f.readlines()).split('\n')
     
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser('Sentence alignment using sentence embeddings and FastDTW',
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('--src', type=str, required=True,
+                        help='path_to_source_document')
+
+    parser.add_argument('--tgt', type=str, required=True,
+                        help='path_to_target_document')
+
+    parser.add_argument('-o', '--output', type=str, required=True,
+                        help='path_to_output_folder')
+
+    args = parser.parse_args()
     # read the content of 2 pdf files: nom and viet
     sn_file = args.src
     vn_file = args.tgt
@@ -144,6 +145,8 @@ if __name__ == "__main__":
                         worksheet.write(row_id, 0, page_id, font_format)
                         worksheet.write(row_id, 1, str(bbox), font_format)
                         worksheet.write_rich_string(row_id, 2, *ocrs)
-                        worksheet.write_rich_string(row_id, 3, *corrs)
-                        worksheet.write_rich_string(row_id, 4, *qns)
+                        if len(corrs)>0:
+                            worksheet.write_rich_string(row_id, 3, *corrs)
+                        if len(qns)>0:
+                            worksheet.write_rich_string(row_id, 4, *qns)
                         row_id =  row_id + 1
