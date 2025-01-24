@@ -123,17 +123,22 @@ if __name__ == "__main__":
                                 nom_list.pop(0)
                                 vie_list.pop(0)
                             elif corrected_list[0].startswith('replace:'):
-                                ocrs.extend((green, nom_list[0]))
-                                corrs.extend((green, corrected_list[0].split(':')[1][-1]))
-                                qns.extend((green, vie_list[0] + ' '))
+                                if corrected_list[0].split(':')[1][-1]!="X":
+                                    ocrs.extend((blue, nom_list[0]))
+                                    corrs.extend((blue, corrected_list[0].split(':')[1][-1]))
+                                    qns.extend((blue, vie_list[0] + ' '))
+                                else:
+                                    ocrs.extend((red, nom_list[0]))
+                                    corrs.extend((red, corrected_list[0].split(':')[1][-1]))
+                                    qns.extend((red, vie_list[0] + ' '))
                                 nom_list.pop(0)
                                 vie_list.pop(0)
                             elif corrected_list[0].startswith('delete:'):
                                 ocrs.extend((red, nom_list[0]))
                                 nom_list.pop(0)
                             elif corrected_list[0].startswith('insert:'):
-                                corrs.extend((blue, corrected_list[0].split(':')[1]))
-                                qns.extend((blue, vie_list[0] + ' '))
+                                corrs.extend((red, corrected_list[0].split(':')[1]))
+                                qns.extend((red, vie_list[0] + ' '))
                                 vie_list.pop(0)
                             corrected_list.pop(0)
                         worksheet.write(row_id, 0, page_id, font_format)
